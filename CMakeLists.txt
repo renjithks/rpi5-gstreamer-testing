@@ -10,7 +10,6 @@ find_package(OpenCV REQUIRED)
 
 # Add the executable
 add_executable(camera_gstreamer src/camera_gstreamer.cpp)
-add_executable(camera_gstreamer_gpu src/camera_gstreamer_gpu.cpp)
 
 # Include OpenCV directories
 include_directories(${OpenCV_INCLUDE_DIRS})
