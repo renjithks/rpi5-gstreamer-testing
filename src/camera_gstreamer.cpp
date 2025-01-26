@@ -54,7 +54,7 @@ private:
     // Configure the GStreamer pipeline based on the mode
     void configurePipeline() {
         if (mode_ == Mode::GPU) {
-            pipeline_ = "gst-launch-1.0 libcamerasrc ! queue ! videoconvert ! glimagesink";
+            pipeline_ = "libcamerasrc ! queue ! videoconvert ! glimagesink";
 
         } else {
             pipeline_ = "libcamerasrc ! video/x-raw,format=I420,width=1280,height=720 ! videoconvert ! appsink";
