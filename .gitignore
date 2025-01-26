@@ -1,0 +1,6 @@
+# Ignore build artifacts
+build/
+*.o
+*.a
+*.so
+*.log
