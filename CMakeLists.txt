@@ -8,14 +8,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Include OpenCV
 find_package(OpenCV REQUIRED)
 
+# Include GStreamer
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0 gstreamer-video-1.0 gstreamer-app-1.0)
+
 # Add the executable
 add_executable(camera_gstreamer src/camera_gstreamer.cpp)
 
-# Include OpenCV directories
-include_directories(${OpenCV_INCLUDE_DIRS})
+# Include directories for OpenCV and GStreamer
+include_directories(${OpenCV_INCLUDE_DIRS} ${GSTREAMER_INCLUDE_DIRS})
 
 # Link the libraries manually
 target_link_libraries(camera_gstreamer
+    ${OpenCV_LIBS}
+    ${GSTREAMER_LIBRARIES}
     opencv_gapi opencv_stitching opencv_aruco opencv_bgsegm opencv_bioinspired
     opencv_ccalib opencv_dnn_objdetect opencv_dnn_superres opencv_dpm opencv_face
     opencv_freetype opencv_fuzzy opencv_hdf opencv_hfs opencv_img_hash

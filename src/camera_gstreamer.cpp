@@ -6,70 +6,78 @@ class CameraApp {
 public:
     enum class Mode { CPU, GPU };
 
-    // Constructor that takes the mode as an argument
     CameraApp(Mode mode) : mode_(mode) {
         configurePipeline();
     }
 
-    // Initialize and start the application
     void run() {
-        // Initialize the VideoCapture object with the configured pipeline
-        cv::VideoCapture cap(pipeline_, cv::CAP_GSTREAMER);
+        std::cout << "Using GStreamer pipeline: " << pipeline_ << std::endl;
 
-        if (!cap.isOpened()) {
-            throw std::runtime_error("Error: Unable to open camera with the GStreamer pipeline: " + pipeline_);
-        }
+        if (mode_ == Mode::CPU) {
+            // CPU mode: OpenCV frame processing
+            cv::VideoCapture cap(pipeline_, cv::CAP_GSTREAMER);
 
-        std::cout << "Camera successfully opened using " 
-                  << (mode_ == Mode::GPU ? "GPU" : "CPU") << " pipeline. Press 'q' to exit." << std::endl;
-
-        cv::Mat frame;
-        while (true) {
-            // Capture a frame
-            cap >> frame;
-
-            if (frame.empty()) {
-                std::cerr << "Error: Captured empty frame." << std::endl;
-                break;
+            if (!cap.isOpened()) {
+                throw std::runtime_error("Error: Unable to open the camera pipeline for processing.");
             }
 
-            // Display the frame
-            cv::imshow("Camera Feed", frame);
+            std::cout << "Camera successfully opened for frame processing. Press 'q' to exit." << std::endl;
 
-            // Break the loop if 'q' or ESC is pressed
-            char key = (char)cv::waitKey(30);
-            if (key == 'q' || key == 27) {
-                break;
+            cv::Mat frame;
+            while (true) {
+                cap >> frame;
+                if (frame.empty()) {
+                    std::cerr << "Error: Captured empty frame." << std::endl;
+                    break;
+                }
+
+                // Display the frame
+                cv::imshow("Camera Feed (CPU Mode)", frame);
+
+                // Exit on 'q' or 'ESC'
+                char key = (char)cv::waitKey(30);
+                if (key == 'q' || key == 27) {
+                    break;
+                }
+            }
+            cap.release();
+            cv::destroyAllWindows();
+        } else if (mode_ == Mode::GPU) {
+            // GPU rendering mode: Launch GStreamer pipeline
+            std::cout << "Launching pipeline for GPU rendering..." << std::endl;
+            std::string gstCommand = "gst-launch-1.0 " + pipeline_;
+            int ret = std::system(gstCommand.c_str());
+            if (ret != 0) {
+                throw std::runtime_error("Error: Failed to launch GPU rendering pipeline.");
             }
         }
-
-        cap.release();
-        cv::destroyAllWindows();
     }
 
 private:
     Mode mode_;
     std::string pipeline_;
 
-    // Configure the GStreamer pipeline based on the mode
     void configurePipeline() {
-        if (mode_ == Mode::GPU) {
-            pipeline_ = "libcamerasrc ! queue ! videoconvert ! glimagesink";
-
-        } else {
-            pipeline_ = "libcamerasrc ! video/x-raw,format=I420,width=1280,height=720 ! videoconvert ! appsink";
+        if (mode_ == Mode::CPU) {
+            // CPU-based pipeline with OpenCV
+            pipeline_ = "libcamerasrc ! video/x-raw,format=NV12,width=1280,height=720 ! "
+                        "videoconvert ! videoscale ! video/x-raw,width=640,height=480,format=BGR ! appsink";
+        } else if (mode_ == Mode::GPU) {
+            // GPU-based pipeline for rendering
+            pipeline_ = "libcamerasrc ! video/x-raw,format=NV12,width=1280,height=720 ! "
+                        "glcolorconvert ! glcolorscale ! glimagesink";
         }
     }
 };
 
 // Helper function to parse mode from user input
 CameraApp::Mode parseMode(const std::string& modeStr) {
-    if (modeStr == "gpu") {
-        return CameraApp::Mode::GPU;
-    } else if (modeStr == "cpu") {
+    if (modeStr == "cpu") {
         return CameraApp::Mode::CPU;
+    } else if (modeStr == "gpu") {
+        return CameraApp::Mode::GPU;
     } else {
-        throw std::invalid_argument("Invalid mode specified. Use 'cpu' or 'gpu'.");
+        throw std::invalid_argument("Invalid mode. Use 'cpu' for CPU processing or 'gpu' for GPU rendering.");
     }
 }
 
@@ -83,7 +91,7 @@ int main(int argc, char* argv[]) {
         // Parse the mode from the command-line argument
         CameraApp::Mode mode = parseMode(argv[1]);
 
-        // Create the CameraApp instance and run it
+        // Create and run the CameraApp
         CameraApp app(mode);
         app.run();
     } catch (const std::exception& e) {
