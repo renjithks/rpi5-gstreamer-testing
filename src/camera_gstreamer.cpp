@@ -62,10 +62,10 @@ private:
             // CPU-based pipeline with OpenCV
             pipeline_ = "libcamerasrc ! video/x-raw,format=NV12,width=1280,height=720 ! "
                         "videoconvert ! videoscale ! video/x-raw,width=640,height=480,format=BGR ! appsink";
+
         } else if (mode_ == Mode::GPU) {
             // GPU-based pipeline for rendering
-            pipeline_ = "libcamerasrc ! video/x-raw,format=NV12,width=1280,height=720 ! "
-                        "glcolorconvert ! glcolorscale ! glimagesink";
+            pipeline_ = "libcamerasrc ! queue ! video/x-raw,format=NV12,width=1280,height=720 ! glupload ! queue ! glcolorconvert ! queue ! glcolorscale ! queue ! glimagesink";
         }
     }
 };
