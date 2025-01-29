@@ -30,8 +30,9 @@ private:
                         "videoconvert ! videoscale ! video/x-raw,width=640,height=480,format=BGR ! appsink";
         } else if (mode_ == Mode::GPU) {
             // GPU-based pipeline
-            pipeline_ = "libcamerasrc ! queue ! video/x-raw,format=NV12,width=1280,height=720 ! "
-                        "queue ! glupload ! queue ! glcolorconvert ! queue ! glcolorscale ! queue ! glimagesink";
+	    pipeline_ = "libcamerasrc ! queue ! video/x-raw,format=NV12,width=1280,height=720 ! "
+		        "queue ! videoscale ! video/x-raw,width=640,height=360 ! " // CPU-based scaling
+		        "queue ! glupload ! queue ! glimagesink";                  // GPU upload and rendering
         }
     }
 
